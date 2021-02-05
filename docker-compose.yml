@@ -1,0 +1,46 @@
+version: "2.4"
+services:
+  backend:
+    image:
+      - context: .
+    restart: on-failure
+    expose:
+      - 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-O", "/dev/null", "-q", "localhost:3000"]
+      interval: 10s
+      timeout: 6s
+      retries: 5
+      start_period: 20s
+    environment:
+      NODE_ENV: staging
+      MONGO_URL: mongodb://admin:aklf22wws@database:27017/obsedu
+
+  database:
+    image: "bitnami/mongodb:4.1.1"
+    restart: on-failure
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    expose:
+      - 27017
+    ports:
+      - "27017:27017"
+    volumes:
+      - "backend-data:/mongodata"
+    environment:
+      - MONGODB_USERNAME=admin
+      - MONGODB_PASSWORD=aklf22wws
+      - MONGODB_DATABASE=obsedu
+
+volumes:
+  backend-data:
+    driver: local
